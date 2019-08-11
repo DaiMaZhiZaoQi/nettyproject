@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	 http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+         http://www.springframework.org/schema/tx/spring-tx.xsd">
+		
+		<!-- Spring 的包扫描  可以过滤包
+		use-default-filters="false"(默认为true)
+		，spring可以自动去扫描base-pack下面或者子包下面的java文件，
+		如果扫描到有@Component @Controller@Service等这些注解的类，则把这些类注册为bean
+		 -->
+		<context:component-scan base-package="com.sx"></context:component-scan>
+		
+		<!-- 
+			启动对@AspectJ注解的支持
+		开启动态代理是什么意思   <aop:aspectj-autoproxy proxy-target-class="true"/>  
+		默认是false,即基于jdk的动态代理，true是基于CGLIB的动态代理，基于CGLIB的效率比基于jdk效率要高
+		 -->
+		<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+		
+         <!-- jdbc 数据库配置  -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+		<property name="driverClassName" value="${driver}"></property>
+		<property name="url" value="${url}" />
+		<property name="username" value="${name}" />
+		<property name="password" value="${pwd}" />
+		<property name="maxActive" value="20" />
+		<property name="initialSize" value="5" />
+		<property name="maxWait" value="60000" />
+		<property name="minIdle" value="1" />
+	</bean>
+	
+	<!-- 加载属性文件 -->
+	<context:property-placeholder location="classpath:conn.properties"></context:property-placeholder>
+	<!-- mybatis的配置  -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+	</bean>
+	
+	<!-- 声明事物控制器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+
+	<!-- 配置事物通知 -->
+	<tx:advice id="tAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<!--只有delete开头的方法名，才能使用事务  -->
+			<tx:method name="delete*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/>
+			<!-- <tx:method name="insert*" isolation="DEFAULT" propagation="REQUIRED" read-only="false"/> -->
+		</tx:attributes>
+	</tx:advice>
+	<!-- aop配置
+		<aop:aspect>  定义切面(切面包括通知和切点)
+		<aop:advisor> 定义通知器(通知器跟切面一样，也包括通知和切点)
+	  -->
+	<aop:config>
+		<aop:pointcut expression="within(com.sx.service.serviceImpl.*)" id="targetPoint"/>
+		<aop:advisor advice-ref="tAdvice" pointcut-ref="targetPoint"/>
+	</aop:config>
+	
+	<!-- 用普通类(与事务控制有区别)的方式实现aop 
+		execution(* *.outTargetMessage(..))		表示所有包下所有类的 outTargetMessage方法
+	-->
+	<bean id="aopAdvice" class="com.sx.util.AopAdvice"></bean>
+	<aop:config>
+		<!-- 通过这种方式可以扫描不同  -->
+		<aop:pointcut expression="execution(* com.sx.util..*.outTargetMessage(..)) or execution(* com.sx.web..*.outTargetMessage(..))" id="targetPointCut"/>
+		<aop:aspect ref="aopAdvice">
+			<aop:before method="adviceBeforeMsg" pointcut-ref="targetPointCut"/>
+			<aop:after method="adviceAfterMsg" pointcut-ref="targetPointCut"/>
+		</aop:aspect>
+	</aop:config>
+	<bean id="aopTarget" class="com.sx.util.AopTarget"></bean>	
+	<bean id="aopTarget2" class="com.sx.web.Target2"></bean>
+	
+	
+	<!-- 开启事物控制注解驱动 -->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+	
+	<!-- 自动扫描，将Mapper接口生成对象注入到Spring容器中 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.sx.dao"></property>
+	</bean>
+	
+	<!-- 单元测试用 -->
+	<!-- <bean id="dog" class="com.sx.test" lazy-init="true" scope="singleton"/> -->
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+</beans>

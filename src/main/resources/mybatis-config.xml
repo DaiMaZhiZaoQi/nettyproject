@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- 配置myBatis的映射文件 -->
+<configuration>
+	<settings>
+		<setting name="logImpl" value="LOG4J" />
+	</settings>
+	<mappers>
+		<mapper resource="com/sx/mapper/UserMapper.xml" />
+		<mapper resource="com/sx/mapper/UserfileMapper.xml" />
+	</mappers>
+</configuration>
