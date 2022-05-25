@@ -23,7 +23,7 @@
   	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<argLine>-Dfile.encoding=UTF-8</argLine>
 	<struts2.version>2.3.24</struts2.version>
-	<spring.version>4.0.6.RELEASE</spring.version>
+	<spring.version>5.2.22.RELEASE</spring.version>
   </properties>
   
   <!-- jar依赖  -->
